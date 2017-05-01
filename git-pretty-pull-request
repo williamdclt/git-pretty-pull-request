@@ -2,8 +2,26 @@
 
 set -e
 
-branches=(preprod prod)
-prefixes=(PREPROD PROD)
+function help_and_exit() {
+    echo -e "${RED}The pull base branches are not configured.${NC}"
+    echo "You can set the pull base branches for this project with:"
+    echo "git config pretty-pull-request.pull-bases \"preprod prod\"" | indent
+    exit 1
+}
+
+function inexistant_pull_base() {
+    echo -e "${RED}The branch $1 that you're trying to use as a pull base doesn't exist${NC}"
+    exit 1
+}
+
+function indent() {
+    sed 's/^/    /'
+}
+
+config_branches=$(git config pretty-pull-request.pull-bases || echo "error")
+[ "$config_branches" = "error" ] && help_and_exit
+
+IFS=' ' read -ra branches <<< "$config_branches"
 
 # If there's an argument, it's the PR message. Else, the message is the last commit message
 [ -z "$1" ] && msg=$(git log -1 --pretty=%B)
@@ -12,10 +30,11 @@ prefixes=(PREPROD PROD)
 # Initialize useful vars
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-NC='\033[0m' # No Coloriables
+NC='\033[0m'
 git fetch --all
 i=0;
 while [ $i -lt ${#branches[@]} ]; do
+    prefixes[i]=${branches[i]^^}
     messages[i]="[${prefixes[i]}] $msg"
     remotes[i]="origin/${branches[i]}"
     i=$[$i+1]
@@ -25,6 +44,9 @@ head=$(git rev-parse --abbrev-ref HEAD)
 # Print summary and ask confirmation
 i=0;
 while [ $i -lt ${#branches[@]} ]; do
+    # Get the commits not yet merged on the pull base
+    diff=$(git log --color --cherry --oneline ${remotes[i]}..$head 2> /dev/null || echo "error")
+    [ "$diff" = "error" ] && inexistant_pull_base "${remotes[i]}"
     echo -e "${GREEN}${messages[i]}${NC} -> ${RED}${remotes[i]}${NC}"
     while read -r line; do
         echo "    $line"
