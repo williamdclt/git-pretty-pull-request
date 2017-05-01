@@ -48,9 +48,9 @@ while [ $i -lt ${#branches[@]} ]; do
     diff=$(git log --color --cherry --oneline ${remotes[i]}..$head 2> /dev/null || echo "error")
     [ "$diff" = "error" ] && inexistant_pull_base "${remotes[i]}"
     echo -e "${GREEN}${messages[i]}${NC} -> ${RED}${remotes[i]}${NC}"
-    while read -r line; do
-        echo "    $line"
-    done <<< "$(git log --color --left-right --graph --cherry-pick --oneline $head...${remotes[i]} | tac)"
+    # git log shows the latest commit at the top, but it's the opposite on Github.
+    # The tac command reverse the order of the lines to be consistent with Github.
+    echo "$diff" | indent | tac
     i=$[$i+1]
 done
 echo
