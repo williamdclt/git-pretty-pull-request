@@ -32,7 +32,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 git fetch --all
-i=0;
+i=0
 while [ $i -lt ${#branches[@]} ]; do
     prefixes[i]=${branches[i]^^}
     messages[i]="[${prefixes[i]}] $msg"
@@ -42,13 +42,13 @@ done
 head=$(git rev-parse --abbrev-ref HEAD)
 
 # Print summary and ask confirmation
-i=0;
+i=0
 while [ $i -lt ${#branches[@]} ]; do
     # Get the commits not yet merged on the pull base
     diff=$(git log --color --cherry --oneline ${remotes[i]}..$head 2> /dev/null || echo "error")
     [ "$diff" = "error" ] && inexistant_pull_base "${remotes[i]}"
     echo -e "${GREEN}${messages[i]}${NC} -> ${RED}${remotes[i]}${NC}"
-    # git log shows the latest commit at the top, but it's the opposite on Github.
+    # git log shows the latest commit at the top, Github shows it at the bottom.
     # The tac command reverse the order of the lines to be consistent with Github.
     echo "$diff" | indent | tac
     i=$[$i+1]
@@ -57,7 +57,7 @@ echo
 read -p "Create ${#branches[@]} pull requests? "
 
 # Open pull requests
-i=0;
+i=0
 while [ $i -lt ${#branches[@]} ]; do
     echo -n "[${prefixes[i]}]: "
     hub pull-request -m "${messages[i]}" -b ${branches[i]} -h $head
