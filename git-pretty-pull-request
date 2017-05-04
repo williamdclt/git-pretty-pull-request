@@ -16,14 +16,18 @@ confirm() {
 }
 
 function sync_origin() {
-    [ x"$(git rev-parse $1)" != x"$(git rev-parse $2)" ] &&
-    if confirm "Branch '$1' is not in sync with '$2'. Do you want me to push for you?"; then
-        git push origin $1
+    branch=$1
+    # nothing to do if remote branch exists and is in sync
+    if (git show-ref --verify --quiet refs/remotes/origin/$branch) && \
+        [ x"$(git rev-parse $branch)" == x"$(git rev-parse origin/$branch)" ]; then
+        true
     else
-        gracefully_abort
+        if confirm "Branch '$branch' is not in sync with 'origin/$branch'. Do you want me to push for you?"; then
+            git push origin $branch
+        else
+            gracefully_abort
+        fi
     fi
-
-    true # This function must succeed even if the rev-parse comparison is false
 }
 
 function help_and_exit() {
