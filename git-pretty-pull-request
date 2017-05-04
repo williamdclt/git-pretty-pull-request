@@ -2,6 +2,30 @@
 
 set -e
 
+confirm() {
+    # call with a prompt string or use a default
+    read -r -p "${1:-Confirm?} [Y/n] " response
+    case "$response" in
+        [nN])
+            false
+            ;;
+        *)
+            true
+            ;;
+    esac
+}
+
+function sync_origin() {
+    [ x"$(git rev-parse $1)" != x"$(git rev-parse $2)" ] &&
+    if confirm "Branch '$1' is not in sync with '$2'. Do you want me to push for you?"; then
+        git push origin $1
+    else
+        gracefully_abort
+    fi
+
+    true # This function must succeed even if the rev-parse comparison is false
+}
+
 function help_and_exit() {
     echo -e "${RED}The pull base branches are not configured.${NC}"
     echo "You can set the pull base branches for this project with:"
@@ -12,6 +36,11 @@ function help_and_exit() {
 function inexistant_pull_base() {
     echo -e "${RED}The branch $1 that you're trying to use as a pull base doesn't exist${NC}"
     exit 1
+}
+
+function gracefully_abort() {
+    echo "Aborted, no pull request opened"
+    exit 0
 }
 
 function indent() {
@@ -54,7 +83,9 @@ while [ $i -lt ${#branches[@]} ]; do
     i=$[$i+1]
 done
 echo
-read -p "Create ${#branches[@]} pull requests? "
+
+sync_origin $head origin/$head
+confirm "Create ${#branches[@]} pull requests?" || gracefully_abort
 
 # Open pull requests
 i=0
