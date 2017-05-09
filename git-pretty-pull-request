@@ -71,17 +71,32 @@ function gracefully_abort() {
     exit 0
 }
 
+function should_open_editor() {
+   [ -e $rootDir/PULL_REQUEST ] || [ -e $rootDir/.github/PULL_REQUEST ] ||
+   [ -e $rootDir/PULL_REQUEST.md ] || [ -e $rootDir/.github/PULL_REQUEST.md ]
+}
+
+function get_pull_request_message() {
+    # If there's an argument, it's the PR message. Else, the message is the last commit message
+    [ -z "$1" ] && msg=$(git log -1 --pretty=%B)
+    [ -z "$msg" ] && msg=$1
+
+    if should_open_editor; then
+        $EDITOR $msgFile < $(tty) > $(tty) # opens editor
+        sed -e '/^#.*$/d' $msgFile # remove comments
+    else
+        echo $msg
+    fi
+}
+
 function indent() {
     sed 's/^/    /'
 }
 
 init
 
-IFS=' ' read -ra branches <<< "$config_branches"
-
-# If there's an argument, it's the PR message. Else, the message is the last commit message
-[ -z "$1" ] && msg=$(git log -1 --pretty=%B)
-[ -z "$msg" ] && msg=$1
+msg=$(get_pull_request_message "$1" | xargs) # opens editor if necessary & trim
+[[ "$msg" = *[![:space:]]* ]] || no_pr_message
 
 # Initialize useful vars
 i=0
