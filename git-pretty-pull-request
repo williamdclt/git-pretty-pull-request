@@ -15,6 +15,21 @@ confirm() {
     esac
 }
 
+function init() {
+    rootDir=$(git rev-parse --show-toplevel)
+    TESTING || git fetch --all & # Takes a while
+    fetchPID=${!}
+    msgFile=$rootDir/.git/PRETTY_PR_EDITMSG
+    config_branches=$(git config pretty-pull-request.pull-bases || echo "error")
+    [ "$config_branches" = "error" ] && help_and_exit
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    NC='\033[0m'
+    head=$(git rev-parse --abbrev-ref HEAD)
+
+    IFS=' ' read -ra branches <<< "$config_branches"
+}
+
 function sync_origin() {
     branch=$1
     # nothing to do if remote branch exists and is in sync
@@ -51,8 +66,7 @@ function indent() {
     sed 's/^/    /'
 }
 
-config_branches=$(git config pretty-pull-request.pull-bases || echo "error")
-[ "$config_branches" = "error" ] && help_and_exit
+init
 
 IFS=' ' read -ra branches <<< "$config_branches"
 
@@ -61,10 +75,6 @@ IFS=' ' read -ra branches <<< "$config_branches"
 [ -z "$msg" ] && msg=$1
 
 # Initialize useful vars
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-NC='\033[0m'
-git fetch --all
 i=0
 while [ $i -lt ${#branches[@]} ]; do
     prefixes[i]=${branches[i]^^}
@@ -72,9 +82,9 @@ while [ $i -lt ${#branches[@]} ]; do
     remotes[i]="origin/${branches[i]}"
     i=$[$i+1]
 done
-head=$(git rev-parse --abbrev-ref HEAD)
 
 # Print summary and ask confirmation
+wait $fetchPID # The git fetch needs to be finished from this point
 i=0
 while [ $i -lt ${#branches[@]} ]; do
     # Get the commits not yet merged on the pull base
