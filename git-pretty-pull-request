@@ -15,6 +15,14 @@ confirm() {
     esac
 }
 
+function join() {
+    local IFS="$1"; shift; echo "$*";
+}
+
+function trim() {
+    sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
+}
+
 function init() {
     rootDir=$(git rev-parse --show-toplevel)
     TESTING || git fetch --all & # Takes a while
