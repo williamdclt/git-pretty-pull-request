@@ -89,12 +89,20 @@ function get_pull_request_message() {
     [ -z "$1" ] && msg=$(git log -1 --pretty=%B)
     [ -z "$msg" ] && msg=$1
 
-    if should_open_editor; then
-        $EDITOR $msgFile < $(tty) > $(tty) # opens editor
-        sed -e '/^#.*$/d' $msgFile # remove comments
-    else
+    if ! should_open_editor; then
         echo $msg
+        exit 0;
     fi
+
+    template=$(cat $rootDir/PULL_REQUEST $rootDir/.github/PULL_REQUEST $rootDir/PULL_REQUEST.md $rootDir/.github/PULL_REQUEST.md 2> /dev/null)
+    msg="$msg
+
+$template
+
+# Requesting a pull to branches $(join ', ' ${branches[@]})"
+    echo "$msg" > $msgFile
+    $EDITOR $msgFile < $(tty) > $(tty) # opens editor
+    sed -e '/^#.*$/d' $msgFile # remove comments
 }
 
 function indent() {
@@ -103,7 +111,8 @@ function indent() {
 
 init
 
-msg=$(get_pull_request_message "$1" | xargs) # opens editor if necessary & trim
+# opens editor if necessary and trim
+msg=$(get_pull_request_message "$1" | trim)
 [[ "$msg" = *[![:space:]]* ]] || no_pr_message
 
 # Initialize useful vars
@@ -122,7 +131,7 @@ while [ $i -lt ${#branches[@]} ]; do
     # Get the commits not yet merged on the pull base
     diff=$(git log --color --cherry --oneline ${remotes[i]}..$head 2> /dev/null || echo "error")
     [ "$diff" = "error" ] && inexistant_pull_base "${remotes[i]}"
-    echo -e "${GREEN}${messages[i]}${NC} -> ${RED}${remotes[i]}${NC}"
+    echo -e "${GREEN}$(echo "${messages[i]}" | head -n 1)${NC} -> ${RED}${remotes[i]}${NC}"
     # git log shows the latest commit at the top, Github shows it at the bottom.
     # The tac command reverse the order of the lines to be consistent with Github.
     echo "$diff" | indent | tac
