@@ -47,8 +47,21 @@ function gracefully_abort() {
     exit 0
 }
 
+function open_pull_request() {
+    # Quick & dirty to allow testing without creating real PRs on Github
+    if TESTING; then
+        echo "test URL: message=$1 base=$2 head=$head"
+    else
+        hub pull-request -m "$1" -b $2 -h $head
+    fi
+}
+
 function indent() {
     sed 's/^/    /'
+}
+
+function TESTING() {
+    [ "$GIT_PRETTY_PR_TEST" = "true" ]
 }
 
 config_branches=$(git config pretty-pull-request.pull-bases || echo "error")
@@ -64,7 +77,7 @@ IFS=' ' read -ra branches <<< "$config_branches"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-git fetch --all
+TESTING || git fetch --all
 i=0
 while [ $i -lt ${#branches[@]} ]; do
     prefixes[i]=${branches[i]^^}
@@ -95,7 +108,7 @@ confirm "Create ${#branches[@]} pull requests?" || gracefully_abort
 i=0
 while [ $i -lt ${#branches[@]} ]; do
     echo -n "[${prefixes[i]}]: "
-    hub pull-request -m "${messages[i]}" -b ${branches[i]} -h $head
+    open_pull_request "${messages[i]}" "${branches[i]}"
     i=$[$i+1]
 done
 
