@@ -108,7 +108,7 @@ confirm "Create ${#branches[@]} pull requests?" || gracefully_abort
 i=0
 while [ $i -lt ${#branches[@]} ]; do
     echo -n "[${prefixes[i]}]: "
-    open_pull_request hub pull-request -m "${messages[i]}" -b ${branches[i]} -h $head
+    open_pull_request "${messages[i]}" "${branches[i]}"
     i=$[$i+1]
 done
 
