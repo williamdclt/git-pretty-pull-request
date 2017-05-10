@@ -7,5 +7,5 @@ load helpers
     run bash -c "echo n | git pretty-pull-request"
 
     expect_status 0
-    [ $(echo "$output" | grep "Aborted") ]
+    expect_output_contains "Aborted"
 }
