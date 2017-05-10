@@ -4,6 +4,7 @@ set -e
 
 setUpBeforeTestSuite() {
     export GIT_PRETTY_PR_TEST="true"  
+    export EDITOR=$suiteDir/fake_editor.sh
     testDir=/tmp/git-pretty-pull-request/
     [ -e $testDir ] && rm -rf $testDir
     cp -r $suiteDir $testDir
