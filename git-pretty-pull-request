@@ -18,7 +18,7 @@ confirm() {
 function sync_origin() {
     branch=$1
     # nothing to do if remote branch exists and is in sync
-    if (git show-ref --verify --quiet refs/remotes/origin/$branch) && \
+    if (git rev-parse --verify --quiet origin/$branch) && \
         [ x"$(git rev-parse $branch)" == x"$(git rev-parse origin/$branch)" ]; then
         true
     else
