@@ -57,25 +57,21 @@ function help_and_exit() {
     echo -e "${RED}The pull base branches are not configured.${NC}"
     echo "You can set the pull base branches for this project with:"
     echo "git config pretty-pull-request.pull-bases \"preprod prod\"" | indent
-    cleanup
     exit 1
 }
 
 function inexistant_pull_base() {
     echo -e "${RED}The branch $1 that you're trying to use as a pull base doesn't exist${NC}"
-    cleanup
     exit 1
 }
 
 function no_pr_message() {
     echo -e "${RED}Aborting due to empty pull request title${NC}"
-    cleanup
     exit 1
 }
 
 function gracefully_abort() {
     echo "Aborted, no pull request opened"
-    cleanup
     exit 0
 }
 
@@ -150,5 +146,5 @@ while [ $i -lt ${#branches[@]} ]; do
     i=$[$i+1]
 done
 
-cleanup
+rm $msgFile || true
 
