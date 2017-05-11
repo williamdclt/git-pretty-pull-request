@@ -64,6 +64,16 @@ function TESTING() {
     [ "$GIT_PRETTY_PR_TEST" = "true" ]
 }
 
+function load_testing_mocks() {
+    # I haven't found a clean way to mock commands transparently so...
+    [ TESTING ] || return
+    for mock in tests/mocks/*.sh ; do
+        . $mock
+    done
+    export EDITOR=fake_editor
+}
+
+load_testing_mocks
 config_branches=$(git config pretty-pull-request.pull-bases || echo "error")
 [ "$config_branches" = "error" ] && help_and_exit
 
