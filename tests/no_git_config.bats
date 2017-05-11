@@ -4,8 +4,7 @@ load helpers
 
 @test "Pull base branches are not configured" {
     git config --unset pretty-pull-request.pull-bases
-    git add a
-    git commit -m "add a"
+    new_commit
     run git pretty-pull-request
 
     expect_status 1
