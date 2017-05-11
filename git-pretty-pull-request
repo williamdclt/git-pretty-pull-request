@@ -18,7 +18,7 @@ confirm() {
 function sync_origin() {
     branch=$1
     # nothing to do if remote branch exists and is in sync
-    if (git show-ref --verify --quiet refs/remotes/origin/$branch) && \
+    if (git rev-parse --verify --quiet origin/$branch > /dev/null) && \
         [ x"$(git rev-parse $branch)" == x"$(git rev-parse origin/$branch)" ]; then
         true
     else
@@ -47,23 +47,19 @@ function gracefully_abort() {
     exit 0
 }
 
-function open_pull_request() {
-    # Quick & dirty to allow testing without creating real PRs on Github
-    if TESTING; then
-        echo "test URL: message=$1 base=$2 head=$head"
-    else
-        hub pull-request -m "$1" -b $2 -h $head
-    fi
-}
-
 function indent() {
     sed 's/^/    /'
 }
 
-function TESTING() {
-    [ "$GIT_PRETTY_PR_TEST" = "true" ]
+function load_testing_mocks() {
+    # I haven't found a clean way to mock commands transparently so...
+    [ "$GIT_PRETTY_PR_TEST" = "true" ] || return 0
+    for mock in tests/mocks/*.sh ; do
+        . $mock
+    done
 }
 
+load_testing_mocks
 config_branches=$(git config pretty-pull-request.pull-bases || echo "error")
 [ "$config_branches" = "error" ] && help_and_exit
 
@@ -77,7 +73,7 @@ IFS=' ' read -ra branches <<< "$config_branches"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
-TESTING || git fetch --all
+git fetch --all
 i=0
 while [ $i -lt ${#branches[@]} ]; do
     prefixes[i]=${branches[i]^^}
@@ -108,7 +104,7 @@ confirm "Create ${#branches[@]} pull requests?" || gracefully_abort
 i=0
 while [ $i -lt ${#branches[@]} ]; do
     echo -n "[${prefixes[i]}]: "
-    open_pull_request "${messages[i]}" "${branches[i]}"
+    hub pull-request -m "${messages[i]}" -b ${branches[i]} -h $head
     i=$[$i+1]
 done
 
