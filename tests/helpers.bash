@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 
+set -e
+
+
 function setup() {
     cd /tmp/git-pretty-pull-request
-    git checkout testing
     git reset --hard origin/testing
     git checkout -b "$BATS_TEST_NAME"
-    touch a b c d e f g h i j k l m n o p q r s t u v w x y z
+    git config pretty-pull-request.pull-bases "preprod prod"
 }
 
 function teardown() {
@@ -29,6 +31,13 @@ function set_pull_bases() {
     git config pretty-pull-request.pull-bases "$1"
 }
 
+function debug() {
+    >&2 echo "============ DEBUG ============="
+    >&2 echo "Exit status: $status"
+    >&2 echo "Output:"
+    >&2 echo "$output"
+    >&2 echo "================================"
+}
 function expect_status() {
     [ $status -eq "$1" ]
 }
