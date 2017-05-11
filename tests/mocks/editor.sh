@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function fake_editor {
-    echo "$1" >> .git/PRETTY_PR_EDITMSG
+    echo "This is a PR message" >> "$1"
 }
 export EDITOR=fake_editor
 
