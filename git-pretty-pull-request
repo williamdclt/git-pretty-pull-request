@@ -25,7 +25,7 @@ function trim() {
 
 function init() {
     rootDir=$(git rev-parse --show-toplevel)
-    TESTING || git fetch --all & # Takes a while
+    git fetch --all & # Takes a while
     fetchPID=${!}
     msgFile=$rootDir/.git/PRETTY_PR_EDITMSG
     config_branches=$(git config pretty-pull-request.pull-bases || echo "error")

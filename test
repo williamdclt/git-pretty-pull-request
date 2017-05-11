@@ -10,21 +10,13 @@ setUpBeforeTestSuite() {
     cp -r $suiteDir $testDir
     cd $testDir
     git config pretty-pull-request.pull-bases "preprod prod"
-    setup_mocks
 }
 
 tearDownAfterTestSuite() {
     rm -rf $testDir
 }
 
-setup_mocks() {
-    alias $EDITOR="$mockDir/editor.sh"
-    alias tty="/dev/null"
-    alias git="$mockDir/git.sh"
-}
-
 suiteDir=$(cd $(dirname $0) && pwd)
-mockDir=$suiteDir/tests/mocks
 
 #########################################
 # Main
