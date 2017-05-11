@@ -10,7 +10,7 @@ load helpers
 
     debug
     expect_status 0
-    [ $(echo "$output" | grep -c "test URL") -eq 2 ]
+    [ $(echo "$output" | grep -c "OPENING PULL REQUEST") -eq 2 ]
 }
 
 @test "Not sync with remote, PR OK" {
@@ -18,5 +18,5 @@ load helpers
     run bash -c "printf \"Y\nY\" | git pretty-pull-request"
 
     expect_status 0
-    [ $(echo "$output" | grep -c "test URL") -eq 2 ]
+    [ $(echo "$output" | grep -c "OPENING PULL REQUEST") -eq 2 ]
 }
