@@ -5,4 +5,3 @@ function tty() {
 }
 
 export -f tty
-
