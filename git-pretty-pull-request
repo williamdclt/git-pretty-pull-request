@@ -64,6 +64,8 @@ function TESTING() {
     [ "$GIT_PRETTY_PR_TEST" = "true" ]
 }
 
+which git > which
+
 config_branches=$(git config pretty-pull-request.pull-bases || echo "error")
 [ "$config_branches" = "error" ] && help_and_exit
 

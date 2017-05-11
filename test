@@ -17,11 +17,13 @@ tearDownAfterTestSuite() {
 }
 
 setup_mocks() {
-    alias $EDITOR="$suiteDir/tests/mocks/editor.sh"
+    alias $EDITOR="$mockDir/editor.sh"
     alias tty="/dev/null"
+    alias git="$mockDir/git.sh"
 }
 
 suiteDir=$(cd $(dirname $0) && pwd)
+mockDir=$suiteDir/tests/mocks
 
 #########################################
 # Main
