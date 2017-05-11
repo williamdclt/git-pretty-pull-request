@@ -18,7 +18,7 @@ confirm() {
 function sync_origin() {
     branch=$1
     # nothing to do if remote branch exists and is in sync
-    if (git rev-parse --verify --quiet origin/$branch) && \
+    if (git rev-parse --verify --quiet origin/$branch > /dev/null) && \
         [ x"$(git rev-parse $branch)" == x"$(git rev-parse origin/$branch)" ]; then
         true
     else
@@ -53,7 +53,7 @@ function indent() {
 
 function load_testing_mocks() {
     # I haven't found a clean way to mock commands transparently so...
-    [ "$GIT_PRETTY_PR_TEST" = "true" ] || return
+    [ "$GIT_PRETTY_PR_TEST" = "true" ] || return 0
     for mock in tests/mocks/*.sh ; do
         . $mock
     done
