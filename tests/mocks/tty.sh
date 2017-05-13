@@ -3,3 +3,6 @@
 function tty() {
     echo /dev/null
 }
+
+export -f tty
+

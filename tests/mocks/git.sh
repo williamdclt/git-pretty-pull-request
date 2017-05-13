@@ -20,3 +20,5 @@ function git() {
     esac
 }
 
+export -f git
+
