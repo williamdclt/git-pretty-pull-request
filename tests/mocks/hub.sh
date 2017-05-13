@@ -7,3 +7,6 @@ function hub() {
     echo "    message:"
     echo "$3"
 }
+
+export -f hub
+

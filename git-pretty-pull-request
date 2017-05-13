@@ -51,15 +51,6 @@ function indent() {
     sed 's/^/    /'
 }
 
-function load_testing_mocks() {
-    # I haven't found a clean way to mock commands transparently so...
-    [ "$GIT_PRETTY_PR_TEST" = "true" ] || return 0
-    for mock in tests/mocks/*.sh ; do
-        . $mock
-    done
-}
-
-load_testing_mocks
 config_branches=$(git config pretty-pull-request.pull-bases || echo "error")
 [ "$config_branches" = "error" ] && help_and_exit
 
