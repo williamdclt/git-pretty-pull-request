@@ -43,5 +43,5 @@ function expect_status() {
 }
 
 function expect_output_contains() {
-    [ $(echo "$output" | grep "$1") ]
+    echo "$output" | grep "$1" > /dev/null
 }
