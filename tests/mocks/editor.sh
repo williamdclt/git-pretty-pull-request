@@ -7,5 +7,7 @@ function fake_editor {
         echo "This is a PR message" >> "$1"
     fi
 }
+
+export -f fake_editor
 EDITOR=fake_editor
 
