@@ -146,5 +146,5 @@ while [ $i -lt ${#branches[@]} ]; do
     i=$[$i+1]
 done
 
-rm $msgFile || true
+[ ! -e "$msgFile" ] || rm "$msgFile"
 
