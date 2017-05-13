@@ -1,0 +1,12 @@
+dependencies:
+  pre:
+      - git config --global user.name "circle"
+      - git config --global user.email "circle@pretty-pull-request.com"
+      - git clone https://github.com/sstephenson/bats.git
+      - sudo ./bats/install.sh /usr/bin
+      - sudo cp git-pretty-pull-request /usr/bin
+
+test:
+  override:
+    - ./test
+
