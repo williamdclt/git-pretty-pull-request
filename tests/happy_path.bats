@@ -6,7 +6,7 @@ load helpers
     new_commit
     push
 
-    run bash -c "echo Y | git pretty-pull-request"
+    run_PR
 
     debug
     expect_status 0
