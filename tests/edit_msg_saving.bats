@@ -19,8 +19,7 @@ load helpers
     new_commit
     push
 
-    [ x"$(git rev-parse $BATS_TEST_NAME)" == x"$(git rev-parse origin/$BATS_TEST_NAME)" ]
-    run bash -c "echo Y | git pretty-pull-request"
+    run_PR
     
     expect_status 0
     [ $(echo "$output" | grep -c "OPENING PULL REQUEST") -eq 2 ]

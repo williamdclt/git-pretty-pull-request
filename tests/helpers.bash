@@ -27,6 +27,18 @@ function push() {
     git branch origin/$(git rev-parse --abbrev-ref HEAD)
 }
 
+function use_template() {
+    if [ -z $1 ]; then
+        echo "This is a template" > PULL_REQUEST
+    else
+        echo "$1" > PULL_REQUEST
+    fi
+}
+
+function run_PR() {
+    run bash -c "echo Y | git pretty-pull-request"
+}
+
 function set_pull_bases() {
     git config pretty-pull-request.pull-bases "$1"
 }
