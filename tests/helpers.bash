@@ -8,7 +8,7 @@ function setup() {
     git reset --hard "$TESTED_BRANCH"
     git checkout -b "$BATS_TEST_NAME"
     git config pretty-pull-request.pull-bases "preprod prod"
-    rm -rf editor_content
+    rm -rf editor_content PULL_REQUEST
 }
 
 function teardown() {
