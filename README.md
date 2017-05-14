@@ -1,3 +1,5 @@
+![screenshot](./screenshot.png)
+
 # What is it?
 
 This is a bash script for opening Github pull requests from your command line.
