@@ -3,9 +3,10 @@
 set -e
 
 
+TESTED_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 function setup() {
     cd /tmp/git-pretty-pull-request
-    git reset --hard origin/testing
+    git reset --hard "$TESTED_BRANCH"
     git checkout -b "$BATS_TEST_NAME"
     git config pretty-pull-request.pull-bases "preprod prod"
 }
@@ -24,7 +25,7 @@ function new_commit() {
 
 # Fake push
 function push() {
-    git branch origin/$(git rev-parse --abbrev-ref HEAD)
+    git branch origin/$BATS_TEST_NAME
 }
 
 function use_template() {
