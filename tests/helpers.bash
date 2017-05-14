@@ -3,12 +3,12 @@
 set -e
 
 
-TESTED_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 function setup() {
     cd /tmp/git-pretty-pull-request
     git reset --hard "$TESTED_BRANCH"
     git checkout -b "$BATS_TEST_NAME"
     git config pretty-pull-request.pull-bases "preprod prod"
+    rm -rf editor_content
 }
 
 function teardown() {
