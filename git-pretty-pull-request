@@ -4,7 +4,8 @@ set -e
 
 confirm() {
     # call with a prompt string or use a default
-    read -r -p "${1:-Confirm?} [Y/n] " response
+    printf "${1:-Confirm?} [Y/n] "
+    read -r response
     case "$response" in
         [nN])
             false
@@ -23,15 +24,27 @@ function trim() {
     sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
 }
 
+function prefix() {
+    sed "s/^/$1 /"
+}
+
+function indent() {
+    prefix "   "
+}
+
 function init() {
     rootDir=$(git rev-parse --show-toplevel)
-    git fetch --all & # Takes a while
+    echo -e "Running 'git fetch --all'..."
+    git fetch --all | prefix '|' | indent
+    echo
     fetchPID=${!}
     msgFile=$rootDir/.git/PRETTY_PR_EDITMSG
     config_branches=$(git config pretty-pull-request.pull-bases || echo "error")
     [ "$config_branches" = "error" ] && help_and_exit
     RED='\033[0;31m'
     GREEN='\033[0;32m'
+    YELLOW='\033[0;33m'
+    BLUE='\033[0;34m'
     NC='\033[0m'
     head=$(git rev-parse --abbrev-ref HEAD)
 
@@ -45,8 +58,9 @@ function sync_origin() {
         [ x"$(git rev-parse $branch)" == x"$(git rev-parse origin/$branch)" ]; then
         true
     else
-        if confirm "Branch '$branch' is not in sync with 'origin/$branch'. Do you want me to push for you?"; then
-            git push origin $branch
+        if confirm "${YELLOW}Branch '$branch' is not in sync with 'origin/$branch'.${NC}\nDo you want me to push for you?${NC}"; then
+            git push origin $branch 2>&1 | prefix '|' | indent
+            echo
         else
             gracefully_abort
         fi
@@ -71,7 +85,7 @@ function no_pr_message() {
 }
 
 function gracefully_abort() {
-    echo "Aborted, no pull request opened"
+    echo -e "${RED}Aborted, no pull request opened${NC}"
     exit 0
 }
 
@@ -86,8 +100,8 @@ function get_pull_request_message() {
     [ -z "$msg" ] && msg=$1
 
     if ! should_open_editor; then
-        echo $msg
-        exit 0;
+        echo "$msg"
+        return 0
     fi
 
     template=$(cat $rootDir/PULL_REQUEST $rootDir/.github/PULL_REQUEST $rootDir/PULL_REQUEST.md $rootDir/.github/PULL_REQUEST.md 2> /dev/null)
@@ -101,33 +115,29 @@ $template
     sed -e '/^#.*$/d' $msgFile # remove comments
 }
 
-function indent() {
-    sed 's/^/    /'
-}
 
 init
+sync_origin $head origin/$head
 
 # opens editor if necessary and trim
 msg=$(get_pull_request_message "$1" | trim)
 [[ "$msg" = *[![:space:]]* ]] || no_pr_message
+msgTitle=$(echo "$msg" | head -n 1)
 
-# Initialize useful vars
 i=0
 while [ $i -lt ${#branches[@]} ]; do
     prefixes[i]=${branches[i]^^}
-    messages[i]="[${prefixes[i]}] $msg"
     remotes[i]="origin/${branches[i]}"
     i=$[$i+1]
 done
 
 # Print summary and ask confirmation
-wait $fetchPID # The git fetch needs to be finished from this point
 i=0
 while [ $i -lt ${#branches[@]} ]; do
     # Get the commits not yet merged on the pull base
     diff=$(git log --color --cherry --oneline ${remotes[i]}..$head 2> /dev/null || echo "error")
     [ "$diff" = "error" ] && inexistant_pull_base "${remotes[i]}"
-    echo -e "${GREEN}$(echo "${messages[i]}" | head -n 1)${NC} -> ${RED}${remotes[i]}${NC}"
+    echo -e "${BLUE}[${prefixes[i]}] $msgTitle"
     # git log shows the latest commit at the top, Github shows it at the bottom.
     # The tac command reverse the order of the lines to be consistent with Github.
     echo "$diff" | indent | tac
@@ -135,14 +145,16 @@ while [ $i -lt ${#branches[@]} ]; do
 done
 echo
 
-sync_origin $head origin/$head
-confirm "Create ${#branches[@]} pull requests?" || gracefully_abort
+echo -e "${BLUE}${#branches[@]} pull requests will be opened with the message:${NC}"
+echo "$msg" | prefix '|' | indent
+echo
+confirm || gracefully_abort
 
 # Open pull requests
 i=0
 while [ $i -lt ${#branches[@]} ]; do
     echo -n "[${prefixes[i]}]: "
-    hub pull-request -m "${messages[i]}" -b ${branches[i]} -h $head
+    hub pull-request -m "[${prefixes[i]}] $msg" -b ${branches[i]} -h $head
     i=$[$i+1]
 done
 
