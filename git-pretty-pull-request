@@ -109,7 +109,11 @@ function get_pull_request_message() {
 
 $template
 
-# Requesting a pull to branches $(join ', ' ${branches[@]})"
+# Requesting a pull to branches $(join ', ' ${branches[@]})
+# Please enter your pull request message above. Lines beginning with '#' will
+# be ignored, and an empty message aborts the pull request opening.
+# You'll be able to check your pull requests before opening
+# them."
     echo "$msg" > $msgFile
     $EDITOR $msgFile < $(tty) > $(tty) # opens editor
     sed -e '/^#.*$/d' $msgFile # remove comments
@@ -131,6 +135,10 @@ while [ $i -lt ${#branches[@]} ]; do
     i=$[$i+1]
 done
 
+echo -e "${BLUE}${#branches[@]} pull requests will be opened with the message:${NC}"
+echo "$msg" | prefix '|' | indent
+echo
+
 # Print summary and ask confirmation
 i=0
 while [ $i -lt ${#branches[@]} ]; do
@@ -145,9 +153,6 @@ while [ $i -lt ${#branches[@]} ]; do
 done
 echo
 
-echo -e "${BLUE}${#branches[@]} pull requests will be opened with the message:${NC}"
-echo "$msg" | prefix '|' | indent
-echo
 confirm || gracefully_abort
 
 # Open pull requests
