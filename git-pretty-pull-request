@@ -132,6 +132,12 @@ i=0
 while [ $i -lt ${#branches[@]} ]; do
     prefixes[i]=$(echo "${branches[i]}" | tr "[a-z]" "[A-Z]")
     remotes[i]="origin/${branches[i]}"
+    if ! git merge --no-commit --no-ff "${remotes[i]}" > /dev/null 2>&1 ; then
+        merge_status[i]="CONFLICT"
+    else
+        merge_status[i]="NO_CONFLICT"
+    fi
+    git merge --abort > /dev/null 2>&1 || true
     i=$[$i+1]
 done
 
@@ -148,7 +154,9 @@ while [ $i -lt ${#branches[@]} ]; do
     diff=$(git log --reverse --color --cherry --oneline ${remotes[i]}..$head\
         2> /dev/null || echo "error")
     [ "$diff" = "error" ] && inexistant_pull_base "${remotes[i]}"
-    echo -e "${BLUE}[${prefixes[i]}] $msgTitle"
+    echo -en "${BLUE}[${prefixes[i]}] $msgTitle"
+    [ "${merge_status[i]}" = "NO_CONFLICT" ] || echo -en "${RED} - CONFLICT with ${remotes[i]}${NC}"
+    echo
     echo "$diff" | indent
     i=$[$i+1]
 done
