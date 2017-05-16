@@ -90,8 +90,8 @@ function gracefully_abort() {
 }
 
 function should_open_editor() {
-   [ -e $rootDir/PULL_REQUEST ] || [ -e $rootDir/.github/PULL_REQUEST ] ||
-   [ -e $rootDir/PULL_REQUEST.md ] || [ -e $rootDir/.github/PULL_REQUEST.md ]
+   [ -e $rootDir/PULL_REQUEST_TEMPLATE ] || [ -e $rootDir/.github/PULL_REQUEST_TEMPLATE ] ||
+   [ -e $rootDir/PULL_REQUEST_TEMPLATE.md ] || [ -e $rootDir/.github/PULL_REQUEST_TEMPLATE.md ]
 }
 
 function get_pull_request_message() {
@@ -104,7 +104,7 @@ function get_pull_request_message() {
         return 0
     fi
 
-    template=$(cat $rootDir/PULL_REQUEST $rootDir/.github/PULL_REQUEST $rootDir/PULL_REQUEST.md $rootDir/.github/PULL_REQUEST.md 2> /dev/null)
+    template=$(cat $rootDir/PULL_REQUEST_TEMPLATE $rootDir/.github/PULL_REQUEST_TEMPLATE $rootDir/PULL_REQUEST_TEMPLATE.md $rootDir/.github/PULL_REQUEST_TEMPLATE.md 2> /dev/null)
     msg="$msg
 
 $template
