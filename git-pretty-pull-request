@@ -130,7 +130,7 @@ msgTitle=$(echo "$msg" | head -n 1)
 
 i=0
 while [ $i -lt ${#branches[@]} ]; do
-    prefixes[i]=${branches[i]^^}
+    prefixes[i]=$(echo "${branches[i]^^}" | tr "[a-z]" "[A-Z]")
     remotes[i]="origin/${branches[i]}"
     i=$[$i+1]
 done
