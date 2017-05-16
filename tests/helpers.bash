@@ -20,7 +20,11 @@ function new_commit() {
     file=$(date -Ins)
     touch "$file"
     git add "$file"
-    git commit -m "add $file"
+    if [ -z "$1" ]; then
+        git commit -m "add $file"
+    else
+        git commit -m "$1"
+    fi
 }
 
 # Fake push
