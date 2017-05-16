@@ -143,12 +143,13 @@ echo
 i=0
 while [ $i -lt ${#branches[@]} ]; do
     # Get the commits not yet merged on the pull base
-    diff=$(git log --color --cherry --oneline ${remotes[i]}..$head 2> /dev/null || echo "error")
+    # git log shows the latest commit at the top, Github shows it at the bottom.
+    # The --reverse argument reverse the order of the lines to be consistent with Github.
+    diff=$(git log --reverse --color --cherry --oneline ${remotes[i]}..$head\
+        2> /dev/null || echo "error")
     [ "$diff" = "error" ] && inexistant_pull_base "${remotes[i]}"
     echo -e "${BLUE}[${prefixes[i]}] $msgTitle"
-    # git log shows the latest commit at the top, Github shows it at the bottom.
-    # The tac command reverse the order of the lines to be consistent with Github.
-    echo "$diff" | indent | tac
+    echo "$diff" | indent
     i=$[$i+1]
 done
 echo
