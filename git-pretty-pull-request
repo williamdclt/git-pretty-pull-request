@@ -35,7 +35,7 @@ function indent() {
 function init() {
     rootDir=$(git rev-parse --show-toplevel)
     echo -e "Running 'git fetch --all'..."
-    git fetch --all | prefix '|' | indent
+    git fetch --all 2>&1 | prefix '|' | indent
     echo
     fetchPID=${!}
     msgFile=$rootDir/.git/PRETTY_PR_EDITMSG
