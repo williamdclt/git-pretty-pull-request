@@ -160,7 +160,7 @@ confirm || gracefully_abort
 i=0
 while [ $i -lt ${#branches[@]} ]; do
     echo -n "[${prefixes[i]}]: "
-    hub pull-request -m "[${prefixes[i]}] $msg" -b ${branches[i]} -h $head
+    hub pull-request -m "[${prefixes[i]}] $msg" -b ${branches[i]} -h $head || true
     i=$[$i+1]
 done
 
