@@ -109,14 +109,14 @@ function get_pull_request_message() {
 
 $template
 
-# Requesting a pull to branches $(join ', ' ${branches[@]})
-# Please enter your pull request message above. Lines beginning with '#' will
-# be ignored, and an empty message aborts the pull request opening.
-# You'll be able to check your pull requests before opening
-# them."
+; Requesting a pull to branches $(join ', ' ${branches[@]})
+; Please enter your pull request message above. Lines beginning with ';' will
+; be ignored, and an empty message aborts the pull request opening.
+; You'll be able to check your pull requests before opening
+; them."
     echo "$msg" > $msgFile
     $EDITOR $msgFile < $(tty) > $(tty) # opens editor
-    sed -e '/^#.*$/d' $msgFile # remove comments
+    sed -e '/^;.*$/d' $msgFile # remove comments
 }
 
 
