@@ -39,16 +39,12 @@ function init() {
     echo
     fetchPID=${!}
     msgFile=$rootDir/.git/PRETTY_PR_EDITMSG
-    config_branches=$(git config pretty-pull-request.pull-bases || echo "error")
-    [ "$config_branches" = "error" ] && help_and_exit
     RED='\033[0;31m'
     GREEN='\033[0;32m'
     YELLOW='\033[0;33m'
     BLUE='\033[0;34m'
     NC='\033[0m'
     head=$(git rev-parse --abbrev-ref HEAD)
-
-    IFS=' ' read -ra branches <<< "$config_branches"
 }
 
 function sync_origin() {
@@ -65,13 +61,6 @@ function sync_origin() {
             gracefully_abort
         fi
     fi
-}
-
-function help_and_exit() {
-    echo -e "${RED}The pull base branches are not configured.${NC}"
-    echo "You can set the pull base branches for this project with:"
-    echo "git config pretty-pull-request.pull-bases \"preprod prod\"" | indent
-    exit 1
 }
 
 function inexistant_pull_base() {
@@ -128,41 +117,29 @@ msg=$(get_pull_request_message "$1" | trim)
 [[ "$msg" = *[![:space:]]* ]] || no_pr_message
 msgTitle=$(echo "$msg" | head -n 1)
 
-i=0
-while [ $i -lt ${#branches[@]} ]; do
-    prefixes[i]=$(echo "${branches[i]}" | tr "[a-z]" "[A-Z]")
-    remotes[i]="origin/${branches[i]}"
-    i=$[$i+1]
-done
+remote="origin/$head"
 
-echo -e "${BLUE}${#branches[@]} pull requests will be opened with the message:${NC}"
+echo -e "${BLUE}A pull request will be opened with the message:${NC}"
 echo "$msg" | prefix '|' | indent
 echo
 
 # Print summary and ask confirmation
-i=0
-while [ $i -lt ${#branches[@]} ]; do
-    # Get the commits not yet merged on the pull base
-    # git log shows the latest commit at the top, Github shows it at the bottom.
-    # The --reverse argument reverse the order of the lines to be consistent with Github.
-    diff=$(git log --reverse --color --cherry --oneline ${remotes[i]}..$head\
-        2> /dev/null || echo "error")
-    [ "$diff" = "error" ] && inexistant_pull_base "${remotes[i]}"
-    echo -e "${BLUE}[${prefixes[i]}] $msgTitle"
-    echo "$diff" | indent
-    i=$[$i+1]
-done
+# Get the commits not yet merged on the pull base
+# git log shows the latest commit at the top, Github shows it at the bottom.
+# The --reverse argument reverse the order of the lines to be consistent with Github.
+diff=$(git log --reverse --color --cherry --oneline origin/staging..$head\
+    2> /dev/null || echo "error")
+[ "$diff" = "error" ] && inexistant_pull_base "$remote"
+echo -e "${BLUE}Commits:"
+echo "$diff" | indent
 echo
 
 confirm || gracefully_abort
 
 # Open pull requests
 i=0
-while [ $i -lt ${#branches[@]} ]; do
-    echo -n "[${prefixes[i]}]: "
-    hub pull-request -m "[${prefixes[i]}] $msg" -b ${branches[i]} -h $head || true
-    i=$[$i+1]
-done
+hub pull-request -m "$msg" -b staging -h $head || true
+i=$[$i+1]
 
 [ ! -e "$msgFile" ] || rm "$msgFile"
 
