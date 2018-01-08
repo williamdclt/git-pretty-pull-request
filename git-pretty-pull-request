@@ -17,7 +17,7 @@ confirm() {
 }
 
 print_and_copy() {
-    local msg="$1"
+    read msg
     [ -z "$msg" ] && return
 
     echo -n "$msg"
@@ -52,7 +52,6 @@ function single_base() {
 
 function init() {
     rootDir=$(git rev-parse --show-toplevel)
-    fetchPID=${!}
     msgFile=$rootDir/.git/PRETTY_PR_EDITMSG
     config_branches=$(git config pretty-pull-request.pull-bases || echo "error")
     [ "$config_branches" = "error" ] && help_and_exit
@@ -171,14 +170,14 @@ echo -e "${NC}"
 confirm || gracefully_abort
 
 # Open pull requests
-wait $SYNC_PID
+wait $SYNC_PID || echo -e "${RED}Error running \`git fetch\`"
 i=0
 while [ $i -lt ${#branches[@]} ]; do
     if single_base; then
-        print_and_copy $(hub pull-request -m "$msg" -b ${branches[i]} -h $head)
+        hub pull-request -m "$msg" -b ${branches[i]} -h $head | print_and_copy
     else
         echo -n "[${prefixes[i]}]: "
-        print_and_copy $(hub pull-request -m "[${prefixes[i]}] $msg" -b ${branches[i]} -h $head)
+        hub pull-request -m "[${prefixes[i]}] $msg" -b ${branches[i]} -h $head | print_and_copy
     fi
     i=$[$i+1]
 done
