@@ -16,6 +16,20 @@ confirm() {
     esac
 }
 
+print_and_copy() {
+    read msg
+    [ -z "$msg" ] && return
+
+    echo -n "$msg"
+    if command -v pbcopy >/dev/null; then
+        echo "$msg" | pbcopy
+        echo "This URL is in your clipboard"
+    elif command -v xclip >/dev/null; then
+        echo "$msg" | xclip -selection clipboard
+        echo "This URL is in your clipboard"
+    fi
+}
+
 function join() {
     local IFS="$1"; shift; echo "$*";
 }
@@ -32,12 +46,12 @@ function indent() {
     prefix "   "
 }
 
+function single_base() {
+    [ ${#branches[@]} -eq 1 ]
+}
+
 function init() {
     rootDir=$(git rev-parse --show-toplevel)
-    echo -e "Running 'git fetch --all'..."
-    git fetch --all 2>&1 | prefix '|' | indent
-    echo
-    fetchPID=${!}
     msgFile=$rootDir/.git/PRETTY_PR_EDITMSG
     config_branches=$(git config pretty-pull-request.pull-bases || echo "error")
     [ "$config_branches" = "error" ] && help_and_exit
@@ -52,25 +66,21 @@ function init() {
 }
 
 function sync_origin() {
+    git fetch >/dev/null 2>&1
     branch=$1
     # nothing to do if remote branch exists and is in sync
     if (git rev-parse --verify --quiet origin/$branch > /dev/null) && \
         [ x"$(git rev-parse $branch)" == x"$(git rev-parse origin/$branch)" ]; then
         true
     else
-        if confirm "${YELLOW}Branch '$branch' is not in sync with 'origin/$branch'.${NC}\nDo you want me to push for you?${NC}"; then
-            git push origin $branch 2>&1 | prefix '|' | indent
-            echo
-        else
-            gracefully_abort
-        fi
+        git push origin $branch >/dev/null 2>&1
     fi
 }
 
 function help_and_exit() {
     echo -e "${RED}The pull base branches are not configured.${NC}"
     echo "You can set the pull base branches for this project with:"
-    echo "git config pretty-pull-request.pull-bases \"preprod prod\"" | indent
+    echo -e "    ${BLUE}git config pretty-pull-request.pull-bases \"preprod prod\"${NC}"
     exit 1
 }
 
@@ -121,7 +131,8 @@ $template
 
 
 init
-sync_origin $head origin/$head
+sync_origin $head origin/$head & # in background
+SYNC_PID=$!
 
 # opens editor if necessary and trim
 msg=$(get_pull_request_message "$1" | trim)
@@ -135,7 +146,8 @@ while [ $i -lt ${#branches[@]} ]; do
     i=$[$i+1]
 done
 
-echo -e "${BLUE}${#branches[@]} pull requests will be opened with the message:${NC}"
+! single_base && echo -e "${BLUE}${#branches[@]} pull requests will be opened with the message:${NC}"
+single_base && echo -e "${BLUE}A pull request will be opened with the message:${NC}"
 echo "$msg" | prefix '|' | indent
 echo
 
@@ -148,19 +160,25 @@ while [ $i -lt ${#branches[@]} ]; do
     diff=$(git log --reverse --color --cherry --oneline ${remotes[i]}..$head\
         2> /dev/null || echo "error")
     [ "$diff" = "error" ] && inexistant_pull_base "${remotes[i]}"
-    echo -e "${BLUE}[${prefixes[i]}] $msgTitle"
+    ! single_base && echo -e "${BLUE}[${prefixes[i]}] $msgTitle"
+    single_base && echo -e "${BLUE}Commits:"
     echo "$diff" | indent
     i=$[$i+1]
 done
-echo
+echo -e "${NC}"
 
 confirm || gracefully_abort
 
 # Open pull requests
+wait $SYNC_PID || echo -e "${RED}Error running \`git fetch\`"
 i=0
 while [ $i -lt ${#branches[@]} ]; do
-    echo -n "[${prefixes[i]}]: "
-    hub pull-request -m "[${prefixes[i]}] $msg" -b ${branches[i]} -h $head || true
+    if single_base; then
+        hub pull-request -m "$msg" -b ${branches[i]} -h $head | print_and_copy
+    else
+        echo -n "[${prefixes[i]}]: "
+        hub pull-request -m "[${prefixes[i]}] $msg" -b ${branches[i]} -h $head | print_and_copy
+    fi
     i=$[$i+1]
 done
 
