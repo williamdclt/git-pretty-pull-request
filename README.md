@@ -11,7 +11,7 @@ It uses the `hub` by Github program, available [here](https://hub.github.com/).
 # How to install it?
 
 - Make sure you've installed [Hub](https://hub.github.com/).
-- Download the git-pretty-pull-request script in this repository and make sure it's available in your $PATH (put it in /usr/local/bin for example).
+- Download the git-pretty-pull-request script in this repository and make sure it's available in your $PATH (put it in /usr/local/bin for example) : `git clone https://github.com/williamdclt/git-pretty-pull-request.git && cp ./git-pretty-pull-request/git-pretty-pull-request /usr/local/bin && rm -rf git-pretty-pull-request`
 - In each of your projects, set the branches on which you want to open pull requests: `git config pretty-pull-request.pull-bases "integration preprod prod"` (or set it globally with the `--global` option)
 - (optional) `git pretty-pull-request` is tedious to type, I'd advise to alias it: `git config --global alias.pr pretty-pull-request`.
 
