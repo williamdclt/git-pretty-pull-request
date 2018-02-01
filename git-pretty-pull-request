@@ -33,7 +33,7 @@ function join() {
 }
 
 function trim() {
-    sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
+    sed -e '1s/^[[:space:]]*//' -e '$s/[[:space:]]*$//'
 }
 
 function prefix() {
