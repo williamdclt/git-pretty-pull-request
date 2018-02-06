@@ -172,10 +172,20 @@ wait $SYNC_PID || echo -e "${RED}Error running \`git fetch\`"
 i=0
 while [ $i -lt ${#branches[@]} ]; do
     if single_base; then
-        hub pull-request -m "$msg" -b ${branches[i]} -h $head | print_and_copy || true
+        label=$(git config pretty-pull-request.pull-bases.${branches[i]} || echo "error")
+        if [ "$label" = "error" ];then
+       	    hub pull-request -m "$msg" -b ${branches[i]} -h $head | print_and_copy || true
+	else
+       	    hub pull-request -m "$msg" -b ${branches[i]} -h $head -l "$label" | print_and_copy || true
+	fi 
     else
         echo -n "[${prefixes[i]}]: "
-        hub pull-request -m "[${prefixes[i]}] $msg" -b ${branches[i]} -h $head | print_and_copy || true
+        label=$(git config pretty-pull-request.pull-bases.${branches[i]} || echo "error")
+        if [ "$label" = "error" ];then
+       	    hub pull-request -m "[${prefixes[i]}] $msg" -b ${branches[i]} -h $head | print_and_copy || true
+	else
+       	    hub pull-request -m "[${prefixes[i]}] $msg" -b ${branches[i]} -h $head -l "$label" | print_and_copy || true
+	fi 
     fi
     i=$[$i+1]
 done
