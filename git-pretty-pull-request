@@ -48,6 +48,34 @@ function single_base() {
     [ ${#branches[@]} -eq 1 ]
 }
 
+function set_options() {
+    while [ -n "$1" ]; do
+        case $1 in
+            --use-label)
+                useLabel=true
+                ;;
+           -m)
+                if [ -n "$2" ]; then
+                    msg=$(echo "$2" | trim)
+                    shift
+                else
+                   echo 'WARN: no message found for "-m" option.'
+                fi
+                ;;
+            --)              # End of all options.
+                shift
+                break
+                ;;
+            -?*)
+                printf 'WARN: Unknown option (ignored): %s\n' "$1" >&2
+                ;;
+            *)               # Default case: No more options, so break out of the loop.
+            break
+        esac
+        shift
+    done
+}
+
 function init() {
     rootDir=$(git rev-parse --show-toplevel)
     msgFile=$rootDir/.git/PRETTY_PR_EDITMSG
@@ -104,8 +132,7 @@ function should_open_editor() {
 
 function get_pull_request_message() {
     # If there's an argument, it's the PR message. Else, the message is the last commit message
-    [ -z "$1" ] && msg=$(git log -1 --pretty=%B)
-    [ -z "$msg" ] && msg=$1
+    [ -z "$msg" ] && msg=$(git log -1 --pretty=%B)
 
     if ! should_open_editor; then
         echo "$msg"
@@ -127,13 +154,14 @@ $template
     sed -e '/^;.*$/d' $msgFile # remove comments
 }
 
-
+useLabel=false
 init
+set_options $@
 sync_origin $head origin/$head & # in background
 SYNC_PID=$!
 
 # opens editor if necessary and trim
-msg=$(get_pull_request_message "$1" | trim)
+msg=$(get_pull_request_message)
 [[ "$msg" = *[![:space:]]* ]] || no_pr_message
 msgTitle=$(echo "$msg" | head -n 1)
 
@@ -172,19 +200,22 @@ wait $SYNC_PID || echo -e "${RED}Error running \`git fetch\`"
 i=0
 while [ $i -lt ${#branches[@]} ]; do
     if single_base; then
-        label=$(git config pretty-pull-request.pull-bases.${branches[i]} || echo "error")
-        if [ "$label" = "error" ];then
-       	    hub pull-request -m "$msg" -b ${branches[i]} -h $head | print_and_copy || true
-	else
+        echo -n "[${branches[i]}]: "
+        label=$(git config pretty-pull-request.labels.${branches[i]} || echo "error")
+        if [ "$useLabel" = true -a "$label" != "error" ];then
+            echo -n "{Label=$label} "
        	    hub pull-request -m "$msg" -b ${branches[i]} -h $head -l "$label" | print_and_copy || true
+	else
+       	    hub pull-request -m "$msg" -b ${branches[i]} -h $head | print_and_copy || true
 	fi 
     else
         echo -n "[${prefixes[i]}]: "
-        label=$(git config pretty-pull-request.pull-bases.${branches[i]} || echo "error")
-        if [ "$label" = "error" ];then
-       	    hub pull-request -m "[${prefixes[i]}] $msg" -b ${branches[i]} -h $head | print_and_copy || true
-	else
+        label=$(git config pretty-pull-request.labels.${branches[i]} || echo "error")
+        if [ "$useLabel" = true -a "$label" != "error" ];then
+            echo -n "{Label=$label} "
        	    hub pull-request -m "[${prefixes[i]}] $msg" -b ${branches[i]} -h $head -l "$label" | print_and_copy || true
+	else
+       	    hub pull-request -m "[${prefixes[i]}] $msg" -b ${branches[i]} -h $head | print_and_copy || true
 	fi 
     fi
     i=$[$i+1]
