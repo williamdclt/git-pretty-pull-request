@@ -15,6 +15,7 @@ It uses the `hub` by Github program, available [here](https://hub.github.com/).
 - Make sure the script is executable : `chmod +x /usr/local/bin/git-pretty-pull-request`
 - In each of your projects, set the branches on which you want to open pull requests: `git config pretty-pull-request.pull-bases "integration preprod prod"` (or set it globally with the `--global` option)
 - (optional) `git pretty-pull-request` is tedious to type, I'd advise to alias it: `git config --global alias.pr pretty-pull-request`.
+- (optional) In each of your projects, set the labels you want to add to your pull requests: `git config pretty-pull-request.labels.prod "Waiting for PO validation"` (or set it globally with the `--global` option)
 
 `git pr` is now an alias to `git pretty-pull-request`, which will call your git-pretty-pull-request script if it can be found in your $PATH!
 
