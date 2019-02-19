@@ -113,6 +113,7 @@ function get_pull_request_message() {
     fi
 
     template=$(cat $rootDir/PULL_REQUEST_TEMPLATE $rootDir/.github/PULL_REQUEST_TEMPLATE $rootDir/PULL_REQUEST_TEMPLATE.md $rootDir/.github/PULL_REQUEST_TEMPLATE.md 2> /dev/null)
+
     msg="$msg
 
 $template
@@ -122,9 +123,10 @@ $template
 ; be ignored, and an empty message aborts the pull request opening.
 ; You'll be able to check your pull requests before opening
 ; them."
-    echo "$msg" > $msgFile
-    ${EDITOR:-vim} $msgFile < $(tty) > $(tty) # opens editor
-    sed -e '/^;.*$/d' $msgFile # remove comments
+
+    echo "$msg" > "$msgFile"
+    ${EDITOR:-vim} "$msgFile" < $(tty) > $(tty) # opens editor
+    sed -e '/^;.*$/d' "$msgFile" # remove comments
 }
 
 
@@ -133,7 +135,13 @@ sync_origin $head origin/$head & # in background
 SYNC_PID=$!
 
 # opens editor if necessary and trim
-msg=$(get_pull_request_message "$1" | trim)
+if [ -f "$msgFile" ] && confirm "Continue aborted PR message?"; then
+    ${EDITOR:-vim} "$msgFile" < $(tty) > $(tty) # opens editor
+    msg=$(sed -e '/^;.*$/d' "$msgFile" | trim)
+else
+    msg=$(get_pull_request_message "$1" | trim)
+fi
+
 [[ "$msg" = *[![:space:]]* ]] || no_pr_message
 msgTitle=$(echo "$msg" | head -n 1)
 
