@@ -18,7 +18,7 @@ confirm() {
 
 print_and_copy() {
     read msg
-    [ -z "$msg" ] && return
+    [[ -z "$msg" ]] && return
 
     echo "$msg"
     if command -v pbcopy >/dev/null; then
@@ -45,7 +45,7 @@ function indent() {
 }
 
 function single_base() {
-    [ ${#branches[@]} -eq 1 ]
+    [[ ${#branches[@]} -eq 1 ]]
 }
 
 function init() {
@@ -98,14 +98,14 @@ function gracefully_abort() {
 }
 
 function should_open_editor() {
-   [ -e $rootDir/PULL_REQUEST_TEMPLATE ] || [ -e $rootDir/.github/PULL_REQUEST_TEMPLATE ] ||
-   [ -e $rootDir/PULL_REQUEST_TEMPLATE.md ] || [ -e $rootDir/.github/PULL_REQUEST_TEMPLATE.md ]
+   [[ -e $rootDir/PULL_REQUEST_TEMPLATE ]] || [[ -e $rootDir/.github/PULL_REQUEST_TEMPLATE ]] ||
+   [[ -e $rootDir/PULL_REQUEST_TEMPLATE.md ]] || [[ -e $rootDir/.github/PULL_REQUEST_TEMPLATE.md ]]
 }
 
 function get_pull_request_message() {
     # If there's an argument, it's the PR message. Else, the message is the last commit message
-    [ -z "$1" ] && msg=$(git log -1 --pretty=%B)
-    [ -z "$msg" ] && msg=$1
+    [[ -z "$1" ]] && msg=$(git log -1 --pretty=%B)
+    [[ -z "$msg" ]] && msg=$1
 
     if ! should_open_editor; then
         echo "$msg"
@@ -135,7 +135,7 @@ sync_origin $head origin/$head & # in background
 SYNC_PID=$!
 
 # opens editor if necessary and trim
-if [ -f "$msgFile" ] && confirm "Continue aborted PR message?"; then
+if [[ -f "$msgFile" ]] && confirm "Continue aborted PR message?"; then
     ${EDITOR:-vim} "$msgFile" < $(tty) > $(tty) # opens editor
     msg=$(sed -e '/^;.*$/d' "$msgFile" | trim)
 else
@@ -146,7 +146,7 @@ fi
 msgTitle=$(echo "$msg" | head -n 1)
 
 i=0
-while [ $i -lt ${#branches[@]} ]; do
+while [[ $i -lt ${#branches[@]} ]]; do
     prefixes[i]=$(echo "${branches[i]}" | tr "[a-z]" "[A-Z]")
     remotes[i]="origin/${branches[i]}"
     i=$[$i+1]
@@ -159,7 +159,7 @@ echo
 
 # Print summary and ask confirmation
 i=0
-while [ $i -lt ${#branches[@]} ]; do
+while [[ $i -lt ${#branches[@]} ]]; do
     # Get the commits not yet merged on the pull base
     # git log shows the latest commit at the top, Github shows it at the bottom.
     # The --reverse argument reverse the order of the lines to be consistent with Github.
@@ -178,7 +178,7 @@ confirm || gracefully_abort
 # Open pull requests
 wait $SYNC_PID || echo -e "${RED}Error running \`git fetch\`"
 i=0
-while [ $i -lt ${#branches[@]} ]; do
+while [[ $i -lt ${#branches[@]} ]]; do
     if single_base; then
         hub pull-request -m "$msg" -b ${branches[i]} -h $head | print_and_copy || true
     else
@@ -189,5 +189,5 @@ while [ $i -lt ${#branches[@]} ]; do
 done
 echo -e "${YELLOW}This last URL is in your clipboard${NC}"
 
-[ ! -e "$msgFile" ] || rm "$msgFile"
+[[ ! -e "$msgFile" ]] || rm "$msgFile"
 
