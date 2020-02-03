@@ -64,14 +64,14 @@ function init() {
 }
 
 function sync_origin() {
-    git fetch >/dev/null 2>&1
+    git fetch --quiet
     branch=$1
     # nothing to do if remote branch exists and is in sync
-    if (git rev-parse --verify --quiet origin/$branch > /dev/null) && \
+    if (git rev-parse --verify --quiet origin/$branch) && \
         [ x"$(git rev-parse $branch)" == x"$(git rev-parse origin/$branch)" ]; then
         true
     else
-        git push origin $branch >/dev/null 2>&1
+        git push origin $branch --quiet
     fi
 }
 
@@ -131,8 +131,7 @@ $template
 
 
 init
-sync_origin $head origin/$head & # in background
-SYNC_PID=$!
+sync_origin $head origin/$head
 
 # opens editor if necessary and trim
 if [ -f "$msgFile" ] && confirm "Continue aborted PR message?"; then
@@ -176,7 +175,6 @@ echo -e "${NC}"
 confirm || gracefully_abort
 
 # Open pull requests
-wait $SYNC_PID || echo -e "${RED}Error running \`git fetch\`"
 i=0
 while [ $i -lt ${#branches[@]} ]; do
     if single_base; then
