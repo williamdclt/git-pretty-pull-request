@@ -52,6 +52,7 @@ function init() {
     rootDir=$(git rev-parse --show-toplevel)
     msgFile=$rootDir/.git/PRETTY_PR_EDITMSG
     config_branches=$(git config pretty-pull-request.pull-bases || echo "error")
+    flag_type=$(git config pretty-pull-request.flag-type || echo "prefix")
     [ "$config_branches" = "error" ] && help_and_exit
     RED='\033[0;31m'
     GREEN='\033[0;32m'
@@ -79,6 +80,12 @@ function help_and_exit() {
     echo -e "${RED}The pull base branches are not configured.${NC}"
     echo "You can set the pull base branches for this project with:"
     echo -e "    ${BLUE}git config pretty-pull-request.pull-bases \"preprod prod\"${NC}"
+    exit 1
+}
+
+function unknown_flag_exit() {
+    echo -e "${RED}Unknown flag_type: ${flag_type}${NC}"
+    echo "Valid flag types are prefix and label"
     exit 1
 }
 
@@ -181,11 +188,18 @@ while [ $i -lt ${#branches[@]} ]; do
         hub pull-request -m "$msg" -b ${branches[i]} -h $head | print_and_copy || true
     else
         echo -n "[${prefixes[i]}]: "
-        hub pull-request -m "[${prefixes[i]}] $msg" -b ${branches[i]} -h $head | print_and_copy || true
+        if [ $flag_type = "prefix" ]
+        then
+            hub pull-request -m "[${prefixes[i]}] $msg" -b ${branches[i]} -h $head | print_and_copy || true
+        elif [ $flag_type = "label" ]
+        then
+            hub pull-request -m "$msg" -b ${branches[i]} -l ${branches[i]} -h $head | print_and_copy || true
+        else
+            unknown_flag_exit
+        fi
     fi
     i=$[$i+1]
 done
 echo -e "${YELLOW}This last URL is in your clipboard${NC}"
 
 [ ! -e "$msgFile" ] || rm "$msgFile"
-
